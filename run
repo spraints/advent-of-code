@@ -29,6 +29,8 @@ def main(year, day)
   end
   c = {}
   t = []
+  t << str_bg("======= Line counts =======")
+  t << Thread.new { `wc -l #{scripts.join(" ")} 2>&1` }
   inputs.each do |input|
     t << str_bg("======= #{input} =======")
     scripts.each do |script|
