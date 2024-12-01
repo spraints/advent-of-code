@@ -67,6 +67,21 @@ def run_bg(script:, input:, c:)
         res.output
       end
     end
+  when ".go"
+    c_th = c[script]
+    if c_th.nil?
+      c_th = c[script] = compile_bg(script) { |out_file| ["go", "build", "-o", out_file, script] }
+    end
+    Thread.new do
+      res = c_th.value
+      if res.ok?
+        # warm up
+        system res.bin, in: "/dev/null", out: "/dev/null", err: "/dev/null"
+        capture_output res.bin, in: input
+      else
+        res.output
+      end
+    end
   else
     puts "Unrecognized script extension."
   end
