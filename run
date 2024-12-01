@@ -1,5 +1,15 @@
 #!/usr/bin/env ruby
-#/ Usage: ./run YYYY DD
+#/ Usage: ./run [YYYY DD]
+#/ Run all scripts for the specified day of Advent of Code.
+#/ Default is today.
+#/
+#/ For example, for day 1 of 2020, you might name inputs like:
+#/  2020/examples/01.simple.txt
+#/  2020/examples/01.complex.txt
+#/  2020/input/01.txt
+#/ And scripts like:
+#/  2020/01.rb
+#/  2020/py/01.py
 
 # todos:
 # - auto download examples and inputs.
