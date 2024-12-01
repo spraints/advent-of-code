@@ -1,0 +1,52 @@
+#!/usr/bin/env ruby
+#/ Usage: ./run YYYY DD
+
+# todos:
+# - auto download examples and inputs.
+
+def main(year, day)
+  inputs = []
+  scripts = []
+  Dir["**/*"].each do |file|
+    case typeof(file, year: year, day: day)
+    when :input
+      inputs << file
+    when :script
+      scripts << file
+    end
+  end
+  inputs.each do |input|
+    puts "======= #{input} ======="
+    scripts.each do |script|
+      puts ">>> #{script} < #{input}"
+      run script: script, input: input
+      puts ""
+    end
+  end
+end
+
+def run(script:, input:)
+  case File.extname(script)
+  when ".rb"
+    system "ruby", script, in: input
+  when ".py"
+    system "python3", script, in: input
+  else
+    puts "Unrecognized script extension."
+  end
+end
+
+def typeof(file, year:, day:)
+  parts = file.split("/")
+  return :wrong_year unless parts.any? { |part| part.to_i == year }
+  return :wrong_day  unless parts.any? { |part| part.to_i == day  }
+  return :input if parts.include?("input") || parts.include?("examples")
+  return :script
+end
+
+if ARGV.size != 2 || ARGV[0].size != 4 || ARGV[1].size != 2
+  File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
+  exit 1
+end
+
+main(*ARGV.map(&:to_i))
