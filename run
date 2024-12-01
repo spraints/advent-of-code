@@ -14,7 +14,9 @@
 # todos:
 # - auto download examples and inputs.
 
+require "net/http"
 require "thread"
+require "uri"
 
 def main(year, day)
   inputs = []
@@ -27,6 +29,32 @@ def main(year, day)
       scripts << file
     end
   end
+
+  if !inputs.any? { |input| input =~ /input/ }
+    begin
+      token = File.read(".token").strip
+      puts "Downloading input..."
+      uri = URI("https://adventofcode.com/#{year}/day/#{day}/input")
+      resp = Net::HTTP.get_response(uri, "Cookie" => "session=#{token}")
+      if resp.code != "200"
+        puts "Error downloading input (HTTP #{resp.code}):"
+        puts resp.body
+      else
+        input_file = sprintf("%04d/input/%02d.txt", year, day)
+        File.write(input_file, resp.body)
+        inputs << input_file
+      end
+    rescue Errno::ENOENT
+      puts "!!!HINT!!! Create a .token file with your session token and I will"
+      puts "!!!HINT!!! download the input file for you!"
+    end
+  end
+
+  if inputs.empty? || scripts.empty?
+    puts "!!! Nothing to do!"
+    exit 0
+  end
+
   c = {}
   t = []
   t << str_bg("======= Line counts =======")
@@ -154,7 +182,7 @@ if ARGV.empty?
   exit 0
 end
 
-if ARGV.size != 2 || ARGV[0].size != 4 || ARGV[1].size != 2
+if ARGV.size != 2 || ARGV[0].size != 4 || !(ARGV[1].size == 1 || ARGV[1].size == 2)
   File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
   exit 1
 end
