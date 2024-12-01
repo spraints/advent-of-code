@@ -44,6 +44,12 @@ def typeof(file, year:, day:)
   return :script
 end
 
+if ARGV.empty?
+  now = Time.now
+  main(now.year, now.day)
+  exit 0
+end
+
 if ARGV.size != 2 || ARGV[0].size != 4 || ARGV[1].size != 2
   File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
   exit 1
