@@ -1,0 +1,4 @@
+#!/bin/bash
+
+set -x
+open $(date +"https://adventofcode.com/%Y/day/%d" | sed -e 's|/0|/|g')
