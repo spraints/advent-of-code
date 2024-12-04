@@ -1,4 +1,4 @@
-import fileinput
+import fileinput, itertools
 
 # each row is a report, each number is a level.
 input = [[int(x) for x in line.strip().split()] for line in fileinput.input()]
@@ -28,12 +28,18 @@ def is_safe(report):
     else:
         return False
 
+def is_safe2(report):
+    if is_safe(report):
+        return True
+    for i in range(len(report)):
+        if is_safe(list(itertools.chain(report[:i], report[i+1:]))):
+            return True
+    return False
+
 safe = filter(is_safe, input)
 part1 = sum(1 for _ in safe)
 print("Part 1: {}".format(part1))
 
-#safe = 0
-#for report in input:
-#    if all_increasing(report, tolerance = 1) or all_decreasing(report, tolerance = 1):
-#        safe += 1
-#print("Part 2: {}".format(safe))
+safe = filter(is_safe2, input)
+part2 = sum(1 for _ in safe)
+print("Part 2: {}".format(part2))
