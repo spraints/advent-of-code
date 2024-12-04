@@ -3,36 +3,30 @@ import fileinput, itertools
 # each row is a report, each number is a level.
 input = [[int(x) for x in line.strip().split()] for line in fileinput.input()]
 
-# ex 1: 1
-# ex 2: 4
-# real 1: 624
-
-def is_safe(report):
-    #print(report)
-    if report[0] < report[1]:
-        #print("ASC")
-        for a, b in zip(report, report[1:]):
-            d = b - a
-            if d < 1 or d > 3:
+def is_safe(report, skip = -1):
+    i = 0
+    if skip == 0:
+        i = 1
+    dir = 0
+    prev = report[i]
+    for i in range(i+1, len(report)):
+        if i != skip:
+            cur = report[i]
+            diff = cur - prev
+            prev = cur
+            if diff >= 1 and diff <= 3 and (dir == 0 or dir == 1):
+                dir = 1
+            elif diff <= -1 and diff >= -3 and (dir == 0 or dir == -1):
+                dir = -1
+            else:
                 return False
-        #print("SAFE")
-        return True
-    elif report[0] > report[1]:
-        #print("DESC")
-        for a, b in zip(report, report[1:]):
-            d = a - b
-            if d < 1 or d > 3:
-                return False
-        #print("SAFE")
-        return True
-    else:
-        return False
+    return True
 
 def is_safe2(report):
     if is_safe(report):
         return True
     for i in range(len(report)):
-        if is_safe(list(itertools.chain(report[:i], report[i+1:]))):
+        if is_safe(report, skip = i):
             return True
     return False
 
