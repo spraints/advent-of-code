@@ -33,6 +33,8 @@ while pos[0] >= 0 and pos[1] >= 0 and pos[0] < rows and pos[1] < cols:
         # turn right 90 degrees.
         dir = turn_right(dir)
     else:
-        visited[pos] = dir
+        if pos not in visited:
+            visited[pos] = []
+        visited[pos].append(dir)
         pos = (r + dir[0], c + dir[1])
 print("Part 1: {}".format(len(visited)))
