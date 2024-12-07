@@ -26,7 +26,6 @@ def turn_right(dir):
 
 pos = start_pos
 dir = start_dir
-visited = {}
 log = []
 while inside(pos, rows, cols):
     r, c = pos
@@ -37,16 +36,12 @@ while inside(pos, rows, cols):
         dir = turn_right(dir)
     else:
         log.append((pos,dir))
-        next_pos = (r + dir[0], c + dir[1])
-        if pos not in visited:
-            visited[pos] = set()
-        visited[pos].add(dir)
-        pos = next_pos
-print("Part 1: {}".format(len(visited)))
+        pos = (r + dir[0], c + dir[1])
+print("Part 1: {}".format(len(set([pos for pos, _ in log]))))
 
 def has_loop(grid, obs, dir, previously):
     pos = obs
-    visited = {}
+    visited = set()
     while inside(pos, rows, cols):
         r, c = pos
         if grid[r][c] == "#" or pos == obs:
@@ -56,28 +51,25 @@ def has_loop(grid, obs, dir, previously):
             dir = turn_right(dir)
         else:
             next_pos = (r + dir[0], c + dir[1])
-            if pos in previously and dir in previously[pos]:
+            if (pos, dir) in previously:
                 return True
-            if pos in visited:
-                if dir in visited[pos]:
-                    return True
-            else:
-                visited[pos] = set()
-            visited[pos].add(dir)
+            if (pos, dir) in visited:
+                return True
+            visited.add((pos, dir))
             pos = next_pos
     return False
 
 obstructions = set()
-visited = {}
+visited = set()
+visited_pos = set()
 for pos, dir in log:
     if len(visited) == 0:
         # no obstruction at the starting position
-        visited[pos] = {dir}
+        visited.add((pos, dir))
+        visited_pos.add(pos)
     else:
-        if pos not in obstructions and pos not in visited and has_loop(grid, pos, dir, visited):
+        if pos not in obstructions and pos not in visited_pos and has_loop(grid, pos, dir, visited):
             obstructions.add(pos)
-        if pos in visited:
-            visited[pos].add(dir)
-        else:
-            visited[pos] = {dir}
+        visited.add((pos, dir))
+        visited_pos.add(pos)
 print("Part 2: {}".format(len(obstructions)))
