@@ -27,6 +27,7 @@ def turn_right(dir):
 pos = start_pos
 dir = start_dir
 visited = {}
+log = []
 while inside(pos, rows, cols):
     r, c = pos
     if grid[r][c] == "#":
@@ -35,6 +36,7 @@ while inside(pos, rows, cols):
         # turn right 90 degrees.
         dir = turn_right(dir)
     else:
+        log.append((pos,dir))
         next_pos = (r + dir[0], c + dir[1])
         if pos not in visited:
             visited[pos] = set()
@@ -42,7 +44,8 @@ while inside(pos, rows, cols):
         pos = next_pos
 print("Part 1: {}".format(len(visited)))
 
-def has_loop(grid, obs, pos, dir):
+def has_loop(grid, obs, dir, previously):
+    pos = obs
     visited = {}
     while inside(pos, rows, cols):
         r, c = pos
@@ -53,6 +56,8 @@ def has_loop(grid, obs, pos, dir):
             dir = turn_right(dir)
         else:
             next_pos = (r + dir[0], c + dir[1])
+            if pos in previously and dir in previously[pos]:
+                return True
             if pos in visited:
                 if dir in visited[pos]:
                     return True
@@ -63,9 +68,16 @@ def has_loop(grid, obs, pos, dir):
     return False
 
 obstructions = set()
-for pos in visited:
-    for dir in visited[pos]:
-        obs = (pos[0] + dir[0], pos[1] + dir[1])
-        if obs not in obstructions and inside(obs, rows, cols) and has_loop(grid, obs, start_pos, start_dir):
-            obstructions.add(obs)
+visited = {}
+for pos, dir in log:
+    if len(visited) == 0:
+        # no obstruction at the starting position
+        visited[pos] = {dir}
+    else:
+        if pos not in obstructions and pos not in visited and has_loop(grid, pos, dir, visited):
+            obstructions.add(pos)
+        if pos in visited:
+            visited[pos].add(dir)
+        else:
+            visited[pos] = {dir}
 print("Part 2: {}".format(len(obstructions)))
