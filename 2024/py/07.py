@@ -10,8 +10,13 @@ def is_true(output, inputs):
     options = [inputs[0]]
     i = 1
     while i < len(inputs):
-        options = [[opt + inputs[i], opt * inputs[i]] for opt in options if opt <= output]
-        options = [opt for pair in options for opt in pair]
+        # All the new terms increase the value, so drop anything that's already over the limit.
+        options = [opt for opt in options if opt <= output]
+        new_opts = []
+        for opt in options:
+            new_opts.append(opt + inputs[i])
+            new_opts.append(opt * inputs[i])
+        options = new_opts
         i += 1
     return output in options
 
