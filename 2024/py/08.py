@@ -4,6 +4,7 @@ rows = len(grid)
 cols = len(grid[0])
 by_freq = {}
 antinodes = set()
+antinodes2 = set()
 for r in range(rows):
     for c in range(cols):
         this = (r,c)
@@ -13,16 +14,28 @@ for r in range(rows):
                 for other in by_freq[x]:
                     dr = other[0] - this[0]
                     dc = other[1] - this[1]
-                    ar = other[0] + dr
-                    ac = other[1] + dc
-                    if ar >= 0 and ar < rows and ac >=0 and ac < cols:
-                        antinodes.add((ar, ac))
-                    br = this[0] - dr
-                    bc = this[1] - dc
-                    if br >= 0 and br < rows and bc >=0 and bc < cols:
-                        antinodes.add((br, bc))
-                    # print([x, this, other, (ar, ac), (br, bc)])
+                    for m in range(rows + cols):
+                        ar = other[0] + m * dr
+                        ac = other[1] + m * dc
+                        if ar >= 0 and ar < rows and ac >=0 and ac < cols:
+                            p = (ar, ac)
+                            antinodes2.add(p)
+                            if m == 1:
+                                antinodes.add(p)
+                        else:
+                            break
+                    for m in range(rows + cols):
+                        ar = this[0] - m * dr
+                        ac = this[1] - m * dc
+                        if ar >= 0 and ar < rows and ac >=0 and ac < cols:
+                            p = (ar, ac)
+                            antinodes2.add(p)
+                            if m == 1:
+                                antinodes.add(p)
+                        else:
+                            break
                 by_freq[x].add(this)
             else:
                 by_freq[x] = {this}
 print("Part 1: {}".format(len(antinodes)))
+print("Part 2: {}".format(len(antinodes2)))
