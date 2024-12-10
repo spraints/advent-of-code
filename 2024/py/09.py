@@ -58,14 +58,14 @@ while len(positions) > 0:
     # append this file.
     pos1.append((id, i, w))
     i += w
-show(orig_positions)
+#show(orig_positions)
 #show(pos1)
 print("Part 1: {}".format(csum(pos1)))
 
 def choose_gap(gaps, start, w):
     best_idx = None
     best_w = None
-    print("look for gaps of {} or bigger (choices: {})".format(w, [(i+w, min(sz)) for i, sz in enumerate(gaps[w:]) if len(sz) > 0]))
+    #print("look for gaps of {} or bigger (choices: {})".format(w, [(i+w, min(sz)) for i, sz in enumerate(gaps[w:]) if len(sz) > 0]))
     for off, idxs in enumerate(gaps[w:]):
         if len(idxs) == 0:
             continue
@@ -83,14 +83,14 @@ pos2 = []
 for id, start, w in reversed(orig_positions):
     new_start, gap_size = choose_gap(gaps, start, w)
     if new_start is not None and new_start < start:
-        print("move {} (len={}) from {} to {} (gap is {})".format(id, w, start, new_start, gap_size))
+        #print("move {} (len={}) from {} to {} (gap is {})".format(id, w, start, new_start, gap_size))
         pos2.append((id, new_start, w))
-        print("gaps of size {},{} were {}, {}".format(gap_size, gap_size - w, len(gaps[gap_size]), len(gaps[gap_size - w])))
+        #print("gaps of size {},{} were {}, {}".format(gap_size, gap_size - w, len(gaps[gap_size]), len(gaps[gap_size - w])))
         gaps[gap_size].remove(new_start)
         gaps[gap_size - w].add(new_start + w)
         #print("gaps of size {},{} are {}, {}".format(gap_size, gap_size - w, len(gaps[gap_size]), len(gaps[gap_size - w])))
     else:
-        print("leave {} (len={}) at {}".format(id, w, start))
+        #print("leave {} (len={}) at {}".format(id, w, start))
         pos2.append((id,start,w))
 
 def st(pos):
@@ -98,5 +98,5 @@ def st(pos):
 pos2 = sorted(pos2, key=st)
 #print(orig_positions)
 #print(pos2)
-show(pos2)
-print("Part 2: {} (8439434080946 is too high)".format(csum(pos2)))
+#show(pos2)
+print("Part 2: {}".format(csum(pos2)))
