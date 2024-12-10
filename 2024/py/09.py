@@ -65,6 +65,7 @@ print("Part 1: {}".format(csum(pos1)))
 def choose_gap(gaps, start, w):
     best_idx = None
     best_w = None
+    print("look for gaps of {} or bigger (choices: {})".format(w, [(i+w, min(sz)) for i, sz in enumerate(gaps[w:]) if len(sz) > 0]))
     for off, idxs in enumerate(gaps[w:]):
         if len(idxs) == 0:
             continue
@@ -81,11 +82,15 @@ def choose_gap(gaps, start, w):
 pos2 = []
 for id, start, w in reversed(orig_positions):
     new_start, gap_size = choose_gap(gaps, start, w)
-    if new_start is not None:
+    if new_start is not None and new_start < start:
+        print("move {} (len={}) from {} to {} (gap is {})".format(id, w, start, new_start, gap_size))
         pos2.append((id, new_start, w))
+        print("gaps of size {},{} were {}, {}".format(gap_size, gap_size - w, len(gaps[gap_size]), len(gaps[gap_size - w])))
         gaps[gap_size].remove(new_start)
         gaps[gap_size - w].add(new_start + w)
+        #print("gaps of size {},{} are {}, {}".format(gap_size, gap_size - w, len(gaps[gap_size]), len(gaps[gap_size - w])))
     else:
+        print("leave {} (len={}) at {}".format(id, w, start))
         pos2.append((id,start,w))
 
 def st(pos):
