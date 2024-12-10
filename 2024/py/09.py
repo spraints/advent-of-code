@@ -23,11 +23,15 @@ def show(positions):
         for _ in range(w):
             s += "{}".format(id)
     print(s)
-#show(positions)
 
-#res = ""
+def csum(positions):
+    csum = 0
+    for id, start, w in positions:
+        csum += id * (start * w + w * (w - 1) // 2)
+    return csum
+
+pos1 = []
 i = 0
-csum = 0
 while len(positions) > 0:
     # Get the next file.
     id, start, w = positions[0]
@@ -40,17 +44,12 @@ while len(positions) > 0:
             positions[-1] = (lid, lstart, lw - gap)
             lw = gap
         else:
-            positions.pop()
-        csum += (lid * (i * lw + lw * (lw - 1) // 2))
-        #res += (str(lid) * lw)
+            positions = positions[:-1]
+        pos1.append((lid, i, lw))
         i += lw
-        #print(res)
-        #print(csum)
     # append this file.
-    csum += (id * (i * w + w * (w - 1) // 2))
-    #res += (str(id) * w)
+    pos1.append((id, i, w))
     i += w
-    #print(res)
-    #print(csum)
-#print(res)
-print("Part 1: {}".format(csum))
+#show(positions)
+#show(pos1)
+print("Part 1: {}".format(csum(pos1)))
