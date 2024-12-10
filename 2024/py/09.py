@@ -22,11 +22,13 @@ for i, x in enumerate(digits):
 
 def show(positions):
     s = ""
+    l = 0
     for id, start, w in positions:
-        while len(s) < start:
-            s += "."
-        for _ in range(w):
-            s += "{}".format(id)
+        if l < start:
+            s += "."*(start - l)
+            l += (start - l)
+        s += ("[{}]".format(id))*w
+        l += w
     print(s)
 
 def csum(positions):
@@ -56,7 +58,7 @@ while len(positions) > 0:
     # append this file.
     pos1.append((id, i, w))
     i += w
-#show(orig_positions)
+show(orig_positions)
 #show(pos1)
 print("Part 1: {}".format(csum(pos1)))
 
@@ -91,5 +93,5 @@ def st(pos):
 pos2 = sorted(pos2, key=st)
 #print(orig_positions)
 #print(pos2)
-#show(pos2)
-print("Part 2: {}".format(csum(pos2)))
+show(pos2)
+print("Part 2: {} (8439434080946 is too high)".format(csum(pos2)))
