@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-#/ Usage: ./run [YYYY DD]
+#/ Usage: ./run [[YYYY] DD]
 #/ Run all scripts for the specified day of Advent of Code.
 #/ Default is today.
 #/
@@ -176,15 +176,24 @@ def typeof(file, year:, day:)
   return :script
 end
 
-if ARGV.empty?
-  now = Time.now
+now = Time.now
+case ARGV.size
+when 0
   main(now.year, now.day)
   exit 0
+when 1
+  day_arg = ARGV[0]
+  if day_arg =~ /\A[012]?\d\z/
+    main(now.year, day_arg.to_i)
+    exit 0
+  end
+when 2
+  year_arg, day_arg = ARGV
+  if year_arg =~ /\A\d{4}\z/ && day_arg =~ /\A[012]?\d\z/
+    main(year_arg.to_i, day_arg.to_i)
+    exit 0
+  end
 end
 
-if ARGV.size != 2 || ARGV[0].size != 4 || !(ARGV[1].size == 1 || ARGV[1].size == 2)
-  File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
-  exit 1
-end
-
-main(*ARGV.map(&:to_i))
+File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
+exit 1
