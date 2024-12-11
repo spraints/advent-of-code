@@ -48,3 +48,6 @@ for height in reversed(range(9)):
 #    print(" -", (r,c), len(reachable[r][c]), reachable[r][c])
 part1 = sum([len(reachable[r][c]) for r, c in zeroes])
 print("Part 1: ", part1)
+
+part2 = sum([scores[r][c] for r, c in zeroes])
+print("Part 2: ", part2)
