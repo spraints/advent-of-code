@@ -21,6 +21,14 @@ def new_region(crop):
 #  AXX
 #  AA -> adds 2 (new top and right, extends bottom)
 #
+#  XXA
+#  AA -> no perimeter change4
+#
+#  AXA
+#  AA -> adds 2
+#
+#  --
+#
 #  XAX
 #  XA -> no perimeter change
 #
@@ -39,17 +47,32 @@ def append_to_region(reg, pos):
     reg["p"] += 2 # Add 4 (the new plot), subtract 2 (the shared edge)
     neighbors = 0
     r, c = pos
-    if region_id((r-1, c-1)) == reg["id"]:
-        neighbors += 1
-    if region_id((r-1,c)) == reg["id"]:
-        neighbors += 1
-    if region_id((r-1,c+1)) == reg["id"]:
-        neighbors += 1
-    if region_id((r,c-1)) == reg["id"]:
-        neighbors += 1
-    if neighbors == 2 or neighbors == 3:
-        reg["p2"] += neighbors
+    ul = region_id((r-1, c-1)) == reg["id"]
+    u = region_id((r-1,c)) == reg["id"]
+    ur = region_id((r-1,c+1)) == reg["id"]
+    l = region_id((r,c-1)) == reg["id"]
+    if l:
+        if ul:
+            reg["p2"] += 2
+    else: # u must be true.
+        if ul and ur:
+            reg["p2"] += 3
+        elif ul or ur:
+            reg["p2"] += 2
     return reg
+# Adding onto a region that touches the top and left is simple for part 1:
+# always add 1 area and 0 perimeter (the new square has 4 new sides, but it
+# shares 2 edges, so 4 - 2x2 = 0 total new fences).
+# For part 2, it depends on other neighbors:
+#
+#  XAX
+#  AA -> reduces total by 2.
+#
+#  AAX
+#  AA -> reduces total by 2.
+#
+#  XAA
+#  AA -> no change
 def mega_region(r1, r2, pos):
     while "goto" in r1:
         r1 = price_inputs[r1["goto"]]
@@ -58,9 +81,13 @@ def mega_region(r1, r2, pos):
     if r1["id"] != r2["id"]:
         r1["a"] += r2["a"]
         r1["p"] += r2["p"]
+        r1["p2"] += r2["p2"]
         r2["goto"] = r1["id"]
     r1["a"] += 1
     # r1["p"] doesn't change
+    r, c = pos
+    if region_id((r-1,c+1)) != r1["id"]:
+        r1["p2"] -= 2
     return r1
 def region_id(pos):
     r, c = pos
@@ -71,8 +98,10 @@ def region_id(pos):
         return reg["id"]
     else:
         return None
+regrid = ""
 for r, row in enumerate(grid):
     for c, crop in enumerate(row):
+        regrid += crop
         region_above = regions[r-1][c] if r > 0 and grid[r-1][c] == crop else None
         region_left = regions[r][c-1] if c > 0 and grid[r][c-1] == crop else None
         my_region = None
@@ -84,8 +113,10 @@ for r, row in enumerate(grid):
             my_region = append_to_region(region_left, (r, c))
         else:
             my_region = new_region(crop)
+        #print(regrid)
+        #print(my_region)
         regions[r][c] = my_region
-        #print(((r,c), region_above, region_left, my_region))
+    regrid += "\n"
 
 def price(pi):
     if "goto" in pi:
@@ -99,4 +130,7 @@ def price2(pi):
         return 0
     return pi["a"] * pi["p2"]
 total_price = sum([price2(pi) for pi in price_inputs])
+#for pi in price_inputs:
+#    if "goto" not in pi:
+#        print(pi)
 print("Part 2:", total_price)
