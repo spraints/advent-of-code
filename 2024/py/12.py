@@ -36,7 +36,7 @@ def new_region(crop):
 #  XA -> adds 2 (new right and bottom, extends left)
 #
 #  AAA
-#  XA -> adds 3 (new right and bottom and left)
+#  XA -> adds 4
 #
 #  AAX
 #  XA -> adds 2 (new bottom and left, extends right)
@@ -55,9 +55,9 @@ def append_to_region(reg, pos):
         if ul:
             reg["p2"] += 2
     else: # u must be true.
-        if ul and ur:
-            reg["p2"] += 3
-        elif ul or ur:
+        if ul:
+            reg["p2"] += 2
+        if ur:
             reg["p2"] += 2
     return reg
 # Adding onto a region that touches the top and left is simple for part 1:
@@ -113,8 +113,7 @@ for r, row in enumerate(grid):
             my_region = append_to_region(region_left, (r, c))
         else:
             my_region = new_region(crop)
-        #print(regrid)
-        #print(my_region)
+        #print(regrid); print(my_region)
         regions[r][c] = my_region
     regrid += "\n"
 
