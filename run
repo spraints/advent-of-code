@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
-#/ Usage: ./run [[YYYY] DD]
+#/ Usage: ./run [--local] [-p N] [[YYYY] DD]
 #/ Run all scripts for the specified day of Advent of Code.
 #/ Default is today.
+#/ --local skips downloading the input.
+#/ -p sets the max number of scripts that run in parallel. By default there is
+#/    no limit.
 #/
 #/ For example, for day 1 of 2020, you might name inputs like:
 #/  2020/examples/01.simple.txt
@@ -18,7 +21,7 @@ require "net/http"
 require "thread"
 require "uri"
 
-def main(year, day)
+def main(year, day, local: false, p: nil)
   inputs = []
   scripts = []
   Dir["**/*"].each do |file|
@@ -30,7 +33,7 @@ def main(year, day)
     end
   end
 
-  if !inputs.any? { |input| input =~ /input/ }
+  if !local && !inputs.any? { |input| input =~ /input/ }
     begin
       token = File.read(".token").strip
       puts "Downloading input..."
@@ -57,18 +60,28 @@ def main(year, day)
 
   c = {}
   t = []
+  q = []
   t << str_bg("======= Line counts =======")
   t << Thread.new { `wc -l #{scripts.join(" ")} 2>&1` }
   inputs.each do |input|
     t << str_bg("======= #{input} =======")
     scripts.each do |script|
+      w = p.nil? ? nil : Queue.new
+      q << w if w
       t << str_bg(">>> #{script} < #{input}")
-      t << run_bg(script: script, input: input, c: c)
+      t << run_bg(script: script, input: input, c: c, w: w)
+      t << w if w
       t << str_bg("")
     end
   end
+  p.times { q.shift&.enq :go } unless p.nil?
   t.each do |x|
-    puts x.value
+    case x
+    when Queue
+      q.shift&.enq :go
+    else
+      puts x.value
+    end
   end
 end
 
@@ -76,18 +89,19 @@ def str_bg(str)
   Thread.new { str }
 end
 
-def run_bg(script:, input:, c:)
+def run_bg(script:, input:, c:, w:)
   case File.extname(script)
   when ".rb"
-    Thread.new { capture_output "ruby", script, in: input }
+    Thread.new { w&.deq; capture_output "ruby", script, in: input }
   when ".py"
-    Thread.new { capture_output "python3", script, in: input }
+    Thread.new { w&.deq; capture_output "python3", script, in: input }
   when ".rs"
     c_th = c[script]
     if c_th.nil?
       c_th = c[script] = compile_bg(script) { |out_file| ["rustc", "-O", "-o", out_file, script] }
     end
     Thread.new do
+      w&.deq
       res = c_th.value
       if res.ok?
         # warm up
@@ -103,6 +117,7 @@ def run_bg(script:, input:, c:)
       c_th = c[script] = compile_bg(script) { |out_file| ["go", "build", "-o", out_file, script] }
     end
     Thread.new do
+      w&.deq
       res = c_th.value
       if res.ok?
         # warm up
@@ -176,21 +191,33 @@ def typeof(file, year:, day:)
   return :script
 end
 
+options = {}
+if ARGV.delete("--local")
+  options[:local] = true
+end
+if i = ARGV.index("-p")
+  ARGV.delete_at(i)
+  options[:p] = ARGV.delete_at(i).to_i
+  if options[:p] < 1
+    raise "illegal value for -p"
+  end
+end
+
 now = Time.now
 case ARGV.size
 when 0
-  main(now.year, now.day)
+  main(now.year, now.day, **options)
   exit 0
 when 1
   day_arg = ARGV[0]
   if day_arg =~ /\A[012]?\d\z/
-    main(now.year, day_arg.to_i)
+    main(now.year, day_arg.to_i, **options)
     exit 0
   end
 when 2
   year_arg, day_arg = ARGV
   if year_arg =~ /\A\d{4}\z/ && day_arg =~ /\A[012]?\d\z/
-    main(year_arg.to_i, day_arg.to_i)
+    main(year_arg.to_i, day_arg.to_i, **options)
     exit 0
   end
 end
