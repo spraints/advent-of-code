@@ -47,12 +47,24 @@ for raw, ax, ay, bx, by, px, py in re.findall(r'(Button A: X\+(\d+), Y\+(\d+)\nB
 ta = 0
 tb = 0
 for g in games:
-    print(g)
     sol = g.solve()
     if sol is not None:
         a, b = sol
-        print("=> {}, {}".format(a, b))
         ta += a
         tb += b
 part1 = ta * 3 + tb
-print("Part 1: ", part1, " (42606 is too high)")
+print("Part 1: ", part1)
+
+ta = 0
+tb = 0
+C = 10000000000000
+for g in games:
+    g.px += C
+    g.py += C
+    sol = g.solve()
+    if sol is not None:
+        a, b = sol
+        ta += a
+        tb += b
+part2 = ta * 3 + tb
+print("Part 2: ", part2)
