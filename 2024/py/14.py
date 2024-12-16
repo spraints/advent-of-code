@@ -47,12 +47,15 @@ print("Part 1: ", score(part1_positions))
 
 if is_real_input:
     needed = 2
+    scores = []
     for i in range(1, 100000):
         pos = steps(i)
         if len(pos) == len(robots):
             x = steps(i)
             show_grid(x)
-            print("Part 2: ", i, " ", score(x))
+            sc = score(x)
+            scores.append(sc)
+            print("Part 2: {} score={} (min={})".format(i, sc, min(scores)))
             needed -= 1
             if needed < 1:
                 break
