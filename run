@@ -133,6 +133,7 @@ def run_bg(script:, input:, c:, w:)
 end
 
 def capture_output(*cmd, **opts)
+  cmd = [{"IS_REAL_INPUT" => "Y"}] + cmd if opts[:in] =~ /input/
   capture_output2(*cmd, **opts).first
 end
 
