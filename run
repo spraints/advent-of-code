@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-#/ Usage: ./run [--local] [-p N] [[YYYY] DD]
+#/ Usage: ./run [--local] [-p N] [[YYYY] DD | INPUT... | SCRIPT...]
 #/ Run all scripts for the specified day of Advent of Code.
 #/ Default is today.
 #/ --local skips downloading the input.
@@ -14,44 +14,19 @@
 #/  2020/01.rb
 #/  2020/py/01.py
 
-# todos:
-# - auto download examples and inputs.
-
+require "fileutils"
 require "net/http"
 require "thread"
 require "uri"
 
-def main(year, day, local: false, p: nil)
-  inputs = []
-  scripts = []
-  Dir["**/*"].each do |file|
-    case typeof(file, year: year, day: day)
-    when :input
-      inputs << file
-    when :script
-      scripts << file
-    end
+def main(year: nil, day: nil, inputs: nil, scripts: nil, local: false, p: nil)
+  if year.nil?
+    year, day = get_date(day: day, inputs: inputs, scripts: scripts)
+  elsif day.nil?
+    raise ArgumentError, "Year specified without day."
   end
 
-  if !local && !inputs.any? { |input| input =~ /input/ }
-    begin
-      token = File.read(".token").strip
-      puts "Downloading input..."
-      uri = URI("https://adventofcode.com/#{year}/day/#{day}/input")
-      resp = Net::HTTP.get_response(uri, "Cookie" => "session=#{token}")
-      if resp.code != "200"
-        puts "Error downloading input (HTTP #{resp.code}):"
-        puts resp.body
-      else
-        input_file = sprintf("%04d/input/%02d.txt", year, day)
-        File.write(input_file, resp.body)
-        inputs << input_file
-      end
-    rescue Errno::ENOENT
-      puts "!!!HINT!!! Create a .token file with your session token and I will"
-      puts "!!!HINT!!! download the input file for you!"
-    end
-  end
+  inputs, scripts = scan_files(inputs: inputs, scripts: scripts, local: local, year: year, day: day)
 
   if inputs.empty? || scripts.empty?
     puts "!!! Nothing to do!"
@@ -83,6 +58,76 @@ def main(year, day, local: false, p: nil)
       puts x.value
     end
   end
+end
+
+def get_date(day:, inputs:, scripts:)
+  if day
+    return Time.now.year, day
+  end
+  ((inputs || []) + (scripts || [])).each do |filename|
+    if info = derive_date(filename)
+      return info
+    end
+  end
+  now = Time.now
+  [now.year, now.day]
+end
+
+def derive_date(filename)
+  year = nil
+  day = nil
+  filename.split("/").each do |part|
+    if year.nil? && part =~ /\A\d{4}\z/
+      year = part.to_i
+    end
+    if day.nil? && part =~ /\A\d{1,2}(\D|\z)/
+      day = part.to_i
+    end
+  end
+  if year && day
+    [year.to_i, day.to_i]
+  end
+end
+
+def scan_files(inputs:, scripts:, local:, year:, day:)
+  return [inputs, scripts] if inputs && scripts
+  found_inputs = []
+  found_scripts = []
+  Dir["**/*"].each do |file|
+    case typeof(file, year: year, day: day)
+    when :input
+      found_inputs << file
+    when :script
+      found_scripts << file
+    end
+  end
+
+  download_input = inputs.nil? && !local && !found_inputs.any? { |input| input =~ /input/ }
+  if download_input
+    begin
+      token = File.read(".token").strip
+      puts "Downloading input..."
+      uri = URI("https://adventofcode.com/#{year}/day/#{day}/input")
+      Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
+        req = Net::HTTP::Get.new(uri)
+        req["Cookie"] = "session=#{token}"
+        resp = http.request(req)
+        if resp.code != "200"
+          puts "Error downloading input (HTTP #{resp.code}):"
+          puts resp.body
+        else
+          input_file = sprintf("%04d/input/%02d.txt", year, day)
+          FileUtils.mkdir_p(File.dirname(input_file))
+          File.write(input_file, resp.body)
+          found_inputs << input_file
+        end
+      end
+    rescue Errno::ENOENT
+      puts "!!!HINT!!! Create a .token file with your session token and I will"
+      puts "!!!HINT!!! download the input file for you!"
+    end
+  end
+  [inputs || found_inputs, scripts || found_scripts]
 end
 
 def str_bg(str)
@@ -204,24 +249,34 @@ if i = ARGV.index("-p")
   end
 end
 
-now = Time.now
-case ARGV.size
-when 0
-  main(now.year, now.day, **options)
-  exit 0
-when 1
-  day_arg = ARGV[0]
-  if day_arg =~ /\A[012]?\d\z/
-    main(now.year, day_arg.to_i, **options)
-    exit 0
-  end
-when 2
-  year_arg, day_arg = ARGV
-  if year_arg =~ /\A\d{4}\z/ && day_arg =~ /\A[012]?\d\z/
-    main(year_arg.to_i, day_arg.to_i, **options)
-    exit 0
+def usage
+  File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
+end
+
+options = {}
+until ARGV.empty?
+  case arg = ARGV.shift
+  when "--local"
+    options[:local] = true
+  when "-p"
+    options[:p] = ARGV.shift.to_i
+  when /\A-/
+    usage
+    exit 1
+  when /\A\d{4}\z/
+    options[:year] = arg.to_i
+  when /\A\d{1,2}\z/
+    options[:day] = arg.to_i
+  when /example/, /input/
+    (options[:inputs] ||= []) << arg
+  else
+    (options[:scripts] ||= []) << arg
   end
 end
 
-File.readlines(__FILE__).grep(/^#\//).each { |line| puts line[3..-1] }
-exit 1
+if options[:year] && options[:day].nil?
+  usage
+  exit 1
+end
+
+main(**options)
