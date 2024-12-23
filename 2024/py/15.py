@@ -1,6 +1,6 @@
 import fileinput
 
-VIZ = True
+VIZ = False
 
 grid = []
 grid2 = []
@@ -68,48 +68,52 @@ for r, row in enumerate(grid):
 print("Part 1:", total_score)
 
 def move(g, d, r):
-    moves = {} # (r,c) => False (if blocked) | new_c
+    moves_in = {} # (r,c) => new_c
+    moves_out = set() # (r,c) of vacated spaces
     nr = (r[0] + d[0], r[1] + d[1])
-    if not can_move(g, d, nr, ".", moves):
+    if not can_move(g, d, nr, ".", moves_in, moves_out):
         return r
-    for pos, c in moves.items():
+    for pos in moves_out:
+        g[pos[0]][pos[1]] = "."
+    for pos, c in moves_in.items():
         g[pos[0]][pos[1]] = c
     return nr
 
-def can_move(g, d, pos, new_c, moves):
+def can_move(g, d, pos, new_c, moves_in, moves_out):
     is_vertical = d[1] == 0
     old_c = g[pos[0]][pos[1]]
     next_pos = (pos[0] + d[0], pos[1] + d[1])
     match (old_c, is_vertical):
         case ".", _:
-            moves[pos] = new_c
+            moves_in[pos] = new_c
             return True
         case "#", _:
             return False
         case _, False:
-            if not can_move(g, d, next_pos, old_c, moves):
+            if not can_move(g, d, next_pos, old_c, moves_in, moves_out):
                 return False
-            moves[pos] = new_c
+            moves_out.add(pos)
+            moves_in[pos] = new_c
             return True
         case "[", True:
-            if not can_move(g, d, next_pos, old_c, moves):
+            if not can_move(g, d, next_pos, old_c, moves_in, moves_out):
                 return False
             pair_pos = (next_pos[0], next_pos[1]+1)
-            if not can_move(g, d, pair_pos, "]", moves):
+            if not can_move(g, d, pair_pos, "]", moves_in, moves_out):
                 return False
-            moves[pos] = new_c
-            if pair_pos not in moves:
-                moves[pair_pos] = "."
+            moves_out.add(pos)
+            moves_out.add((pos[0], pos[1]+1))
+            moves_in[pos] = new_c
             return True
         case "]", True:
-            if not can_move(g, d, next_pos, old_c, moves):
+            if not can_move(g, d, next_pos, old_c, moves_in, moves_out):
                 return False
             pair_pos = (next_pos[0], next_pos[1]-1)
-            if not can_move(g, d, pair_pos, "[", moves):
+            if not can_move(g, d, pair_pos, "[", moves_in, moves_out):
                 return False
-            moves[pos] = new_c
-            if pair_pos not in moves:
-                moves[pair_pos] = "."
+            moves_out.add(pos)
+            moves_out.add((pos[0], pos[1]-1))
+            moves_in[pos] = new_c
             return True
     raise RuntimeError("illegal pos={} dir={} c={}".format(pos, d, old_c))
 
