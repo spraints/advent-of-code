@@ -1,6 +1,6 @@
 import fileinput
 
-VIZ = False
+VIZ = True
 
 grid = []
 grid2 = []
@@ -67,61 +67,62 @@ for r, row in enumerate(grid):
             total_score += c
 print("Part 1:", total_score)
 
-def shift2(g, d, r):
+def move(g, d, r):
+    moves = {} # (r,c) => False (if blocked) | new_c
+    nr = (r[0] + d[0], r[1] + d[1])
+    if not can_move(g, d, nr, ".", moves):
+        return r
+    for pos, c in moves.items():
+        g[pos[0]][pos[1]] = c
+    return nr
+
+def can_move(g, d, pos, new_c, moves):
     is_vertical = d[1] == 0
-    nr = r[0] + d[0]
-    nc = r[1] + d[1]
-    match (g[nr][nc], is_vertical):
+    old_c = g[pos[0]][pos[1]]
+    next_pos = (pos[0] + d[0], pos[1] + d[1])
+    match (old_c, is_vertical):
         case ".", _:
-            return (nr, nc)
+            moves[pos] = new_c
+            return True
         case "#", _:
-            return None
+            return False
         case _, False:
-            nn = shift2(g, d, (nr, nc))
-            if nn is None:
-                return None
-            nnr, nnc = nn
-            g[nnr][nnc] = g[nr][nc]
-            g[nr][nc] = "."
-            return (nr, nc)
+            if not can_move(g, d, next_pos, old_c, moves):
+                return False
+            moves[pos] = new_c
+            return True
         case "[", True:
-            ln = shift2(g, d, (nr, nc))
-            rn = shift2(g, d, (nr, nc+1))
-            if ln is None or rn is None:
-                if VIZ:
-                    print("todo: may need to undo [")
-                return None
-            g[ln[0]][ln[1]] = g[nr][nc]
-            g[rn[0]][rn[1]] = g[nr][nc+1]
-            g[nr][nc] = "."
-            g[nr][nc+1] = "."
-            return (nr, nc)
+            if not can_move(g, d, next_pos, old_c, moves):
+                return False
+            pair_pos = (next_pos[0], next_pos[1]+1)
+            if not can_move(g, d, pair_pos, "]", moves):
+                return False
+            moves[pos] = new_c
+            if pair_pos not in moves:
+                moves[pair_pos] = "."
+            return True
         case "]", True:
-            ln = shift2(g, d, (nr, nc-1))
-            rn = shift2(g, d, (nr, nc))
-            if ln is None or rn is None:
-                if VIZ:
-                    print("todo: may need to undo ]")
-                return None
-            g[ln[0]][ln[1]] = g[nr][nc-1]
-            g[rn[0]][rn[1]] = g[nr][nc]
-            g[nr][nc-1] = "."
-            g[nr][nc] = "."
-            return (nr, nc)
-    raise RuntimeError("illegal {},{} {}".format(nr, nc, grid[nr][nc]))
+            if not can_move(g, d, next_pos, old_c, moves):
+                return False
+            pair_pos = (next_pos[0], next_pos[1]-1)
+            if not can_move(g, d, pair_pos, "[", moves):
+                return False
+            moves[pos] = new_c
+            if pair_pos not in moves:
+                moves[pair_pos] = "."
+            return True
+    raise RuntimeError("illegal pos={} dir={} c={}".format(pos, d, old_c))
 
 if VIZ:
-    print("\n[*] Start part 2:")
+    print("\n[*] Start part 2: ", robot2)
     show(grid2, robot2)
 for i, step in enumerate(instructions):
-    next_robot2 = shift2(grid2, dirs[step], robot2)
-    if next_robot2 is not None:
-        robot2 = next_robot2
+    robot2 = move(grid2, dirs[step], robot2)
     if VIZ:
-        print("\n[{}] Move {}:".format(i, step))
+        print("\n[{}] Move {}: {}".format(i, step, robot2))
         show(grid2, robot2)
 
-show(grid2, robot2)
+# show(grid2, robot2)
 total_score = 0
 for r, row in enumerate(grid2):
     for c, x in enumerate(row):
