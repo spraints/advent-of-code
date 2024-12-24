@@ -4,63 +4,53 @@ VIZ = False
 
 grid = [[c for c in line.strip()] for line in fileinput.input()]
 
-s = None
-e = None
-for r, row in enumerate(grid):
-    for c, cell in enumerate(row):
-        if cell == 'S':
-            s = (r, c)
-        if cell == 'E':
-            e = (r, c)
-
 #      (-1,0)
 # (0,-1)  @  (0,1)
 #       (1,0)
-d = (0,1)
+alldirs = frozenset([(-1,0), (0,1), (1,0), (0,-1)])
 
-options = [ (s,d,0,frozenset([s])) ]
+INFINITY = float("inf")
 
-def trydir(p, nd, ns, v):
-    np = (p[0] + nd[0], p[1] + nd[1])
-    x = grid[np[0]][np[1]]
-    if x != "." and x != "E":
-        return
-    if np in v:
-        return
-    if VIZ:
-        print(" also check {} (dir={})".format(np, nd))
-    options.append( (np, nd, ns, v | frozenset([np])) )
+start = None
+end = None
+init_dir = (0,1)
+unvisited = set()
+dist = {}
+for r, row in enumerate(grid):
+    for c, cell in enumerate(row):
+        if cell == "#":
+            continue
+        p = (r,c)
+        for d in alldirs:
+            node = (p, d)
+            unvisited.add(node)
+            dist[node] = INFINITY
+        if cell == "S":
+            start = p
+        if cell == "E":
+            end = p
 
-def show(score, p, v):
-    print("score={} vs {}, p={} end={}".format(score, highest, p, e))
-    for r, row in enumerate(grid):
-        vr = []
-        for c, x in enumerate(row):
-            if p == (r,c) or (r,c) in v:
-                vr.append("x")
-            else:
-                vr.append(x)
-        print("".join(vr))
-
-highest = 0
-lowest = None
-while len(options) > 0:
-    s, d, score, visited = options.pop()
-    if VIZ:
-        show(score, s, visited)
-    if s == e:
-        if VIZ:
-            print("END!!!!!")
-        if score > highest:
-            highest = score
-        if lowest is None or score < lowest:
-            lowest = score
-        continue
-
+def neighbors(node):
+    p, d = node
     l = (-d[1], d[0])
     r = (d[1], -d[0])
-    trydir(s, d, score + 1, visited)
-    trydir(s, l, score + 1001, visited)
-    trydir(s, r, score + 1001, visited)
+    for nd, cost in [(d, 1), (l, 1001), (r, 1001)]:
+        np = (p[0] + nd[0], p[1] + nd[1])
+        if grid[np[0]][np[1]] != "#":
+            yield (np, nd), cost
 
-print("Part 1: ", lowest)
+dist[(start, init_dir)] = 0
+best = None
+while unvisited:
+    cur = min(unvisited, key=lambda node: dist[node])
+    unvisited.remove(cur)
+    if dist[cur] == INFINITY:
+        raise("no path, sorry")
+    for neighbor, cost in neighbors(cur):
+        ns = cost + dist[cur]
+        if ns < dist[neighbor]:
+            dist[neighbor] = ns
+    if cur[0] == end:
+        best = dist[cur]
+        break
+print("Part 1: ", best)
