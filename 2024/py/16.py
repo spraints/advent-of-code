@@ -1,6 +1,6 @@
 import fileinput, heapq
 
-VIZ = True
+VIZ = False
 
 grid = [[c for c in line.strip()] for line in fileinput.input()]
 
@@ -32,7 +32,7 @@ def trydir(p, nd, ns, v):
     options.append( (np, nd, ns, v | frozenset([np])) )
 
 def show(score, p, v):
-    print("score={} vs {}, p={} end={}".format(score, best, p, e))
+    print("score={} vs {}, p={} end={}".format(score, highest, p, e))
     for r, row in enumerate(grid):
         vr = []
         for c, x in enumerate(row):
@@ -42,7 +42,8 @@ def show(score, p, v):
                 vr.append(x)
         print("".join(vr))
 
-best = 0
+highest = 0
+lowest = None
 while len(options) > 0:
     s, d, score, visited = options.pop()
     if VIZ:
@@ -50,8 +51,10 @@ while len(options) > 0:
     if s == e:
         if VIZ:
             print("END!!!!!")
-        if score > best:
-            best = score
+        if score > highest:
+            highest = score
+        if lowest is None or score < lowest:
+            lowest = score
         continue
 
     l = (-d[1], d[0])
@@ -60,4 +63,4 @@ while len(options) > 0:
     trydir(s, l, score + 1001, visited)
     trydir(s, r, score + 1001, visited)
 
-print("Part 1: ", best)
+print("Part 1: ", lowest)
