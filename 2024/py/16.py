@@ -40,6 +40,7 @@ def neighbors(node):
             yield (np, nd), cost
 
 dist[(start, init_dir)] = 0
+prev = {}
 best = None
 while unvisited:
     cur = min(unvisited, key=lambda node: dist[node])
@@ -50,7 +51,22 @@ while unvisited:
         ns = cost + dist[cur]
         if ns < dist[neighbor]:
             dist[neighbor] = ns
+            prev[neighbor] = [cur]
+        elif ns == dist[neighbor]:
+            prev[neighbor].append(cur)
     if cur[0] == end:
         best = dist[cur]
         break
 print("Part 1: ", best)
+
+best_paths = set()
+to_visit = [(end, d) for d in alldirs]
+while len(to_visit) > 0:
+    n = to_visit.pop()
+    best_paths.add(n[0])
+    if n not in prev:
+        #print("warning: {} is not in a best path".format(n))
+        continue
+    for x in prev[n]:
+        to_visit.append(x)
+print("Part 2: ", len(best_paths))
