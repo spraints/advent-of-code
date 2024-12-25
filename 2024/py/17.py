@@ -84,6 +84,7 @@ def main():
         run_program(comp, program)
         print(f"{manual_guess} => {comp.outs}")
 
+    print("-------")
     # A = 0b...DEF...GHI
     # B = 0bGHI
     # B = 0bG^HI (off)
@@ -91,28 +92,16 @@ def main():
     # B = 0bGH^I
     # B = 0bGH^I ^ 0bDEF
     #
-    # want 2 (0b010), G=D E=^H F=^I
-    # let's say GHI = 0b000
-    # -> DEF must be 0b011
-    # -> off must be 2, which doesn't work.
-    # how about GHI = 0b111
-    # -> DEF must be 0b100
-    # -> off must be 0b101 (5)
-    # A[0] = 0b...100xx111
-    #
-    # next round: need 4, A is 0b...100xx
-    # G=^D H=E I=F
-    # GHI = 0b0xx
-    # DEF = 0bxxx
-    # off < 4
-    # let's say off is 3 so GHI is 0b001 and DEF is x10. (doesn't work)
-    # let's say off is 0 so GHI is 0b010 and DEF is 0b010. (doesn't work)
-    # result is 
-    manual_guess = 0b10000111
+    # starting from the end.
+    # 0: want to output 0. Simply, an input of 0b001 => 0.
+    # 1: so now, A=0b001GHI and we want an output of 3 (0b011).
+    #    G=D H=^E I=F
+    #    000
+    manual_guess = 0b001000
     comp = orig_comp.dup()
     comp.a = manual_guess
     run_program(comp, program)
-    print(f"{manual_guess} => {comp.outs}")
+    print(f"{manual_guess} => {comp.outs} ({comp.outs == program})")
 
 def run_program(comp, program):
     while comp.ip < len(program):
