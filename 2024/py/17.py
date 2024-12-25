@@ -1,5 +1,7 @@
 import fileinput
 
+VIZ = False
+
 class Computer:
     def __init__(self):
         self.a = 0
@@ -50,8 +52,16 @@ def main():
     while comp.ip < len(program):
         opcode = program[comp.ip]
         operand = program[comp.ip+1]
+        if VIZ:
+            show_state(comp)
+            print(f"operation {type(opcodes[opcode]).__name__} ({opcode}) {operand} {type(operands[operand]).__name__}")
         opcodes[opcode].do(comp, operand, operands[operand])
+    if VIZ:
+        show_state(comp)
     print("Part 1: ", ",".join([str(n) for n in comp.outs]))
+
+def show_state(comp):
+    print(f"ip={comp.ip} a={comp.a:x} b={comp.b:x} c={comp.c:x}")
 
 class adv:
     def do(self, comp, _, cmb):
@@ -75,7 +85,7 @@ class bxl:
 
 class bst:
     def do(self, comp, _, cmb):
-        comp.b = comp.b & 0x07
+        comp.b = cmb.val(comp) & 0x07
         comp.ip += 2
 
 class jnz:
